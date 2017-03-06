@@ -7,9 +7,21 @@ categories: announcements
 share_text: "Planning for 7.0"
 ---
 
-If you didn't know already, we're planning on releasing a 7.0 version soon! I'd like to go over some notable changes and a few things we are still working out!
+If you didn't know already, we're planning on releasing a 7.0 version soon 🙌 ! I'd like to go over some notable changes and a few things we are still working out!
 
-## 😎 Awesome Changes
+This release will be a lot *smaller* than the previous 6.0 release. We're excited to move toward smaller/safer major releases. Now you'll get the benefits of less dependencies on our end and faster install times.
+
+Upgrading for most projects should be as simple as updating your package.json versions to 7.0.
+
+## Re-iterating Project Goals
+
+As I explain our on [Google Summer of Code project page](https://summerofcode.withgoogle.com/organizations/5842528113786880/), the goal of Babel is to "abstracts the browser away so that you can worry about writing your application rather than trying to figure out what features are supported in each environment".
+
+Instead of just converting ES6 to ES5, we want Babel to be the tool that transitions Javascript developers from using compiled JavaScript (via Babel) to using native Javascript (modern browsers) while supporting the tooling around those features (linting, minifying, codemods).
+
+> For the latest updates: check the last [babel/notes post](https://github.com/babel/notes/blob/master/2017-02/feb-22.md)
+
+## 😎 Breaking Changes
 
 ### [#4315](https://github.com/babel/babel/issues/4315) Drop support for unmaintained Node versions: 0.10, 0.12, 5
 
@@ -60,6 +72,35 @@ If the spec to an experimental proposal changes, we should be free to make a bre
 
 ## 🚀 New Feature
 
+### `.babelrc.js`
+
+> [babel/babel#4630](https://github.com/babel/babel/issues/4630)
+
+ESlint allows for an `.eslintrc.js` file and webpack has `webpack.config.js`.
+
+Developers can easily implement config changes (ex: environment aware plugins) in JavaScript itself:
+
+```js
+var env = process.env.BABEL_ENV || process.env.NODE_ENV;
+module.exports = {
+  plugins: [
+    env === 'production' && "transform-react-constant-elements"
+  ].filter(Boolean)
+};
+```
+
+Or how [create-react-app](https://github.com/facebookincubator/create-react-app/blob/65e63403952f4f3c7e872f707fb3736e339254d9/packages/babel-preset-react-app/index.js#L42-L51) easily worked around a bug with using "env" in a external preset: 
+
+```js
+var plugins = [];
+if (env === 'production') {
+  plugins.push.apply(plugins, ["transform-react-constant-elements"]);
+}
+module.exports = { plugins };
+```
+
+Either way, it seems both simple and straightforward to write this kind of logic (and we could always provide some helper functions for this).
+
 ### [#3683](https://github.com/babel/babel/pull/3683) Add `transform-unicode-property-regex` to the Stage 2 preset
 
 [transform-unicode-property-regex](https://github.com/mathiasbynens/babel-plugin-transform-unicode-property-regex) is maintained by [@mathiasbynens](https://github.com/mathiasbynens)
@@ -77,6 +118,46 @@ Output
 ```js
 var regex = /[0-9A-Fa-f]/;
 ```
+
+## 💀 Possible Deprecations
+
+### Deprecate the "env" option in `.babelrc`
+
+> [babel/babel#5276](https://github.com/babel/babel/issues/5276)
+
+The "env" configuration option (not to be confused with babel-preset-env) has been a source of confusion for our users as seen by the numerous issues reported.
+
+The [current behavior](http://babeljs.io/docs/usage/babelrc/#env-option) is to merge the config values into the top level values which isn't always intuitive such that developers end up putting nothing in the top level and just duplicating all the presets/plugins under separate envs.
+
+To eliminate the confusion (and help our power users), we're considering dropping the env config option all together and recommending users use the proposed JS config format (see below).
+
+### Deprecate Stage X presets
+
+> [babel/babel#4914](https://github.com/babel/babel/issues/4914)
+> [babel/babel#5128](https://github.com/babel/babel/issues/5128)
+
+Many in the community (and TC39) have expressed concerns over the Stage X presets. I believe I just added them to have an easy migration path from Babel 5 to Babel 6 (used to be a "stage" option).
+
+While we want to have an easy to use tool, it turns out that many companies/developers use these "not yet JavaScript" presets all the time, and in production. "Stage 0" doesn't really set the same tone as `babel-preset-dont-use-this-stage-0`.
+
+> Ariya just made an [awesome poll](https://twitter.com/AriyaHidayat/status/833797322786025472) that explains what I'm talking about
+
+Developers don't actually know what features are in what version of JavaScript (and they shouldn't have to know). However it is a problem when we all start thinking that "features" that are actually still proposals are in the spec already.
+
+Many open source projects (including Babel still 😝), tutorials, conference talks, etc all use `stage-0`. React promotes the use of JSX, class properties (currently Stage 2), object rest/spread (now Stage 3) and we all believe that it's just JavaScript because Babel compiled it for them. So maybe removing this abstraction would help people understand more about what is going on and the tradeoffs one is making when choosing to use Stage X plugins.
+
+It also seems much easier to maintain your own preset than to have to update the Stage preset.
+
+> I often see people go "I want object rest, and that's stage 2, so I enabled stage 2". They now have a load of other experimental features enabled they might not know about and probably don't need.
+> Also, as stages change over time then people who aren't using shrinkwrap or yarn will get new features appearing, possibly without their knowledge. If a feature is canned they might even get one vanishing. @glenjamin
+
+### Deprecate ES20xx presets
+
+If we're going to think about removing the Stage X presets, why not the ES20XX presets (currently ES2015, ES2016, ES2017)?
+
+> It's annoying making a yearly preset (extra package/dependency, issues with npm package squatting unless we do scoped packages)
+
+Developers shouldn't even need to make the decision of what yearly preset to use? If we drop/deprecate these presets then everyone can use [babel-preset-env](https://github.com/babel/babel-preset-env) instead which will already update as the spec changes.
 
 ## 🤔 Questions
 
@@ -101,45 +182,6 @@ Cons
 
 Sounds like we may want to defer, and in the very least it's not a breaking change given it's a name change.
 
-### Dropping the "env" option in `.babelrc`
-
-> [babel/babel#5276](https://github.com/babel/babel/issues/5276)
-
-The "env" configuration option (not to be confused with babel-preset-env) has been a source of confusion for our users as seen by the numerous issues reported.
-
-The [current behavior](http://babeljs.io/docs/usage/babelrc/#env-option) is to merge the config values into the top level values which isn't always intuitive such that developers end up putting nothing in the top level and just duplicating all the presets/plugins under separate envs.
-
-To eliminate the confusion (and help our power users), we're considering dropping the env config option all together and recommending users use the proposed JS config format (see below).
-
-### `.babelrc.js`
-
-> [babel/babel#4630](https://github.com/babel/babel/issues/4630)
-
-ESlint allows for an `.eslintrc.js` file and webpack has `webpack.config.js`.
-
-Developers can easily implement environment config changes in JavaScript itself
-
-```js
-var env = process.env.BABEL_ENV || process.env.NODE_ENV;
-module.exports = {
-  plugins: [
-    env === 'production' && "transform-react-constant-elements"
-  ].filter(Boolean)
-};
-```
-
-Or how [create-react-app](https://github.com/facebookincubator/create-react-app/blob/65e63403952f4f3c7e872f707fb3736e339254d9/packages/babel-preset-react-app/index.js#L42-L51) easily worked around a bug with using "env" in a external preset: 
-
-```js
-var plugins = [];
-if (env === 'production') {
-  plugins.push.apply(plugins, ["transform-react-constant-elements"]);
-}
-module.exports = { plugins };
-```
-
-Either way, it seems both simple and straightforward to write this kind of logic (and we could always provide some helper functions for this).
-
 ### `external-helpers`, `transform-runtime`, `babel-polyfill`
 
 > "regeneratorRuntime is not defined" - reported all the time.
@@ -152,31 +194,3 @@ Basically we need a better solution around how to deal with built-ins/polyfills.
 - Complaints about generated code size since `babel-polyfill` includes all polyfills (although now we have [`useBuiltIns`](https://github.com/babel/babel-preset-env#usebuiltins)) and no one knowing about `external-helpers`
 
 Can we combine/replace these packages and have an easier, default experience?
-
-### Removal of Stage X presets
-
-> [babel/babel#4914](https://github.com/babel/babel/issues/4914)
-> [babel/babel#5128](https://github.com/babel/babel/issues/5128)
-
-Many in the community (and TC39) have expressed concerns over the Stage X presets. I believe I just added them to have an easy migration path from Babel 5 to Babel 6 (used to be a "stage" option).
-
-While we want to have an easy to use tool, it turns out that many companies/developers use these "not yet JavaScript" presets all the time, and in production. "Stage 0" doesn't really set the same tone as `babel-preset-dont-use-this-stage-0`.
-
-> Ariya just made an [awesome poll](https://twitter.com/AriyaHidayat/status/833797322786025472) that explains what I'm talking about
-
-Developers don't actually know what features are in what version of JavaScript (and they shouldn't have to know). However it is a problem when we all start thinking that "features" that are actually still proposals are in the spec already.
-
-Many open source projects (including Babel still 😝), tutorials, conference talks, etc all use `stage-0`. React promotes the use of JSX, class properties (currently Stage 2), object rest/spread (now Stage 3) and we all believe that it's just JavaScript because Babel compiled it for them. So maybe removing this abstraction would help people understand more about what is going on and the tradeoffs one is making when choosing to use Stage X plugins.
-
-It also seems much easier to maintain your own preset than to have to update the Stage preset.
-
-> I often see people go "I want object rest, and that's stage 2, so I enabled stage 2". They now have a load of other experimental features enabled they might not know about and probably don't need.
-> Also, as stages change over time then people who aren't using shrinkwrap or yarn will get new features appearing, possibly without their knowledge. If a feature is canned they might even get one vanishing. @glenjamin
-
-### Removal of ES20xx presets
-
-If we're going to think about removing the Stage X presets, why not the ES20XX presets (currently ES2015, ES2016, ES2017)?
-
-> It's annoying making a yearly preset (extra package/dependency, issues with npm package squatting unless we do scoped packages)
-
-Developers shouldn't even need to make the decision of what yearly preset to use? If we drop/deprecate these presets then everyone can use [babel-preset-env](https://github.com/babel/babel-preset-env) instead which will already update as the spec changes.
