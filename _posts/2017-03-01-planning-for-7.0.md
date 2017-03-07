@@ -76,30 +76,29 @@ If the spec to an experimental proposal changes, we should be free to make a bre
 
 > [babel/babel#4630](https://github.com/babel/babel/issues/4630)
 
-ESlint allows for an `.eslintrc.js` file and webpack has `webpack.config.js`.
+`*.js` configuration files are fairly common in the JavaScript ecosystem. ESlint and Webpack both allow for `.eslintrc.js` and `webpack.config.js` configuration files, respectively.
 
-Developers can easily implement config changes (ex: environment aware plugins) in JavaScript itself:
+Writing configuration files in JavaScript allows for dynamic configuration, making it possible to write a single configuration file that can adapt to different environments programmaticaly.
+
+```js
+var env = process.env.BABEL_ENV || process.env.NODE_ENV;
+var plugins = [];
+if (env === 'production') {
+  plugins.push.apply(plugins, ["a-super-cool-babel-plugin"]);
+}
+module.exports = { plugins };
+```
 
 ```js
 var env = process.env.BABEL_ENV || process.env.NODE_ENV;
 module.exports = {
   plugins: [
-    env === 'production' && "transform-react-constant-elements"
+    env === 'production' && "another-super-cool-babel-plugin"
   ].filter(Boolean)
 };
 ```
 
-Or how [create-react-app](https://github.com/facebookincubator/create-react-app/blob/65e63403952f4f3c7e872f707fb3736e339254d9/packages/babel-preset-react-app/index.js#L42-L51) easily worked around a bug with using "env" in a external preset: 
-
-```js
-var plugins = [];
-if (env === 'production') {
-  plugins.push.apply(plugins, ["transform-react-constant-elements"]);
-}
-module.exports = { plugins };
-```
-
-Either way, it seems both simple and straightforward to write this kind of logic (and we could always provide some helper functions for this).
+This was previously done through the `env` configuration option, which is now deprecated. See [below](#user-content-deprecate-the-env-option-in-babelrc) for more details.
 
 ### [#3683](https://github.com/babel/babel/pull/3683) Add `transform-unicode-property-regex` to the Stage 2 preset
 
