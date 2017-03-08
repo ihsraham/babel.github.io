@@ -78,7 +78,7 @@ If the spec to an experimental proposal changes, we should be free to make a bre
 
 `*.js` configuration files are fairly common in the JavaScript ecosystem. ESlint and Webpack both allow for `.eslintrc.js` and `webpack.config.js` configuration files, respectively.
 
-Writing configuration files in JavaScript allows for dynamic configuration, making it possible to write a single configuration file that can adapt to different environments programmaticaly.
+Writing configuration files in JavaScript allows for dynamic configuration, making it possible to write a single configuration file that can adapt to different environments programmatically.
 
 ```js
 var env = process.env.BABEL_ENV || process.env.NODE_ENV;
