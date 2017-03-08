@@ -15,7 +15,7 @@ Upgrading for most projects should be as simple as updating your package.json ve
 
 ## Re-iterating Project Goals
 
-As I explain our on [Google Summer of Code project page](https://summerofcode.withgoogle.com/organizations/5842528113786880/), the goal of Babel is to "abstracts the browser away so that you can worry about writing your application rather than trying to figure out what features are supported in each environment".
+As I explain on our [Google Summer of Code project page](https://summerofcode.withgoogle.com/organizations/5842528113786880/), the goal of Babel is to "abstracts the browser away so that you can worry about writing your application rather than trying to figure out what features are supported in each environment".
 
 Instead of just converting ES6 to ES5, we want Babel to be the tool that transitions Javascript developers from using compiled JavaScript (via Babel) to using native Javascript (modern browsers) while supporting the tooling around those features (linting, minifying, codemods).
 
